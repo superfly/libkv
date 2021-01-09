@@ -3,14 +3,16 @@ package consul
 import (
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/docker/libkv"
-	"github.com/docker/libkv/store"
 	api "github.com/hashicorp/consul/api"
+	"github.com/superfly/libkv"
+	"github.com/superfly/libkv/store"
 )
 
 const (
@@ -48,6 +50,7 @@ type Consul struct {
 	sync.Mutex
 	config *api.Config
 	client *api.Client
+	node   string
 }
 
 type consulLock struct {
@@ -90,11 +93,30 @@ func New(endpoints []string, options *store.Config) (store.Store, error) {
 	}
 
 	// Creates a new client
+	fmt.Println(config)
 	client, err := api.NewClient(config)
 	if err != nil {
 		return nil, err
 	}
 	s.client = client
+
+	if options.NodeName != "" {
+		name, err := os.Hostname()
+
+		if err != nil {
+			return nil, err
+		}
+		reg := &api.CatalogRegistration{
+			Node:    options.NodeName,
+			Address: name,
+		}
+		_, err = client.Catalog().Register(reg, nil)
+
+		if err != nil {
+			return nil, err
+		}
+		s.node = options.NodeName
+	}
 
 	return s, nil
 }
@@ -130,6 +152,10 @@ func (s *Consul) renewSession(pair *api.KVPair, ttl time.Duration) error {
 			Behavior:  api.SessionBehaviorDelete, // Delete the key when the session expires
 			TTL:       (ttl / 2).String(),        // Consul multiplies the TTL by 2x
 			LockDelay: 1 * time.Millisecond,      // Virtually disable lock delay
+		}
+
+		if s.node != "" {
+			entry.Node = s.node
 		}
 
 		// Create the key session

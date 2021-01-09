@@ -49,6 +49,7 @@ type Config struct {
 	Username          string
 	Password          string
 	Token             *string
+	NodeName          string
 }
 
 // ClientTLSConfig contains data for a Client TLS configuration in the form

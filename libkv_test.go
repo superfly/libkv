@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/libkv/store"
 	"github.com/stretchr/testify/assert"
+	"github.com/superfly/libkv/store"
 )
 
 func TestNewStoreUnsupported(t *testing.T) {
