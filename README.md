@@ -1,9 +1,9 @@
 # libkv
 
-[![GoDoc](https://godoc.org/github.com/docker/libkv?status.png)](https://godoc.org/github.com/docker/libkv)
+[![GoDoc](https://godoc.org/github.com/superfly/libkv?status.png)](https://godoc.org/github.com/superfly/libkv)
 [![Build Status](https://travis-ci.org/docker/libkv.svg?branch=master)](https://travis-ci.org/docker/libkv)
 [![Coverage Status](https://coveralls.io/repos/docker/libkv/badge.svg)](https://coveralls.io/r/docker/libkv)
-[![Go Report Card](https://goreportcard.com/badge/github.com/docker/libkv)](https://goreportcard.com/report/github.com/docker/libkv)
+[![Go Report Card](https://goreportcard.com/badge/github.com/superfly/libkv)](https://goreportcard.com/report/github.com/superfly/libkv)
 
 `libkv` provides a `Go` native library to store metadata.
 
