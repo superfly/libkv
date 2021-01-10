@@ -160,8 +160,9 @@ func (s *Consul) renewSession(pair *api.KVPair, ttl time.Duration) error {
 		}
 
 		// Create the key session
-		session, _, err = s.client.Session().Create(entry, nil)
+		session, _, err = Create(s.client, entry, nil)
 		if err != nil {
+			fmt.Println("Failed to create session", entry.Node, entry.Checks, err)
 			return err
 		}
 
@@ -181,6 +182,59 @@ func (s *Consul) renewSession(pair *api.KVPair, ttl time.Duration) error {
 
 	_, _, err = s.client.Session().Renew(session, nil)
 	return err
+}
+
+// Create makes a new session. Providing a session entry can
+// customize the session. It can also be nil to use defaults.
+func Create(c *api.Client, se *api.SessionEntry, q *api.WriteOptions) (string, *api.WriteMeta, error) {
+	var obj interface{}
+	if se != nil {
+		body := make(map[string]interface{})
+		obj = body
+		if se.Name != "" {
+			body["Name"] = se.Name
+		}
+		if se.Node != "" {
+			body["Node"] = se.Node
+		}
+		if se.LockDelay != 0 {
+			body["LockDelay"] = durToMsec(se.LockDelay)
+		}
+		body["Checks"] = se.Checks
+		if len(se.NodeChecks) > 0 {
+			body["NodeChecks"] = se.NodeChecks
+		}
+		if len(se.ServiceChecks) > 0 {
+			body["ServiceChecks"] = se.ServiceChecks
+		}
+		if se.Behavior != "" {
+			body["Behavior"] = se.Behavior
+		}
+		if se.TTL != "" {
+			body["TTL"] = se.TTL
+		}
+	}
+	return create(c, obj, q)
+}
+func create(c *api.Client, obj interface{}, q *api.WriteOptions) (string, *api.WriteMeta, error) {
+	var out struct{ ID string }
+	wm, err := c.Raw().Write("/v1/session/create", obj, &out, q)
+	if err != nil {
+		return "", nil, err
+	}
+	return out.ID, wm, nil
+}
+
+// durToMsec converts a duration to a millisecond specified string. If the
+// user selected a positive value that rounds to 0 ms, then we will use 1 ms
+// so they get a short delay, otherwise Consul will translate the 0 ms into
+// a huge default delay.
+func durToMsec(dur time.Duration) string {
+	ms := dur / time.Millisecond
+	if dur > 0 && ms == 0 {
+		ms = 1
+	}
+	return fmt.Sprintf("%dms", ms)
 }
 
 // getActiveSession checks if the key already has
