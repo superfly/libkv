@@ -156,6 +156,7 @@ func (s *Consul) renewSession(pair *api.KVPair, ttl time.Duration) error {
 
 		if s.node != "" {
 			entry.Node = s.node
+			entry.Checks = []string{}
 		}
 
 		// Create the key session
