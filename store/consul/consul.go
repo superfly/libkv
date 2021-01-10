@@ -93,7 +93,6 @@ func New(endpoints []string, options *store.Config) (store.Store, error) {
 	}
 
 	// Creates a new client
-	fmt.Println(config)
 	client, err := api.NewClient(config)
 	if err != nil {
 		return nil, err
@@ -489,9 +488,13 @@ func (s *Consul) NewLock(key string, options *store.LockOptions) (store.Locker, 
 		TTL:       (ttl / 2).String(),         // Consul multiplies the TTL by 2x
 		LockDelay: 1 * time.Millisecond,       // Virtually disable lock delay
 	}
+	if s.node != "" {
+		entry.Node = s.node
+		entry.Checks = []string{}
+	}
 
 	// Create the key session
-	session, _, err := s.client.Session().Create(entry, nil)
+	session, _, err := Create(s.client, entry, nil)
 	if err != nil {
 		return nil, err
 	}
